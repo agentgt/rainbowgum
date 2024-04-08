@@ -56,12 +56,17 @@ record BuilderModel( //
 		return " throws " + exceptions.stream().collect(Collectors.joining(", "));
 	}
 
+	/*
+	 * TODO this lambda is too hard to understand maybe we inline or just emit some
+	 * string.
+	 */
 	// https://github.com/jstachio/jstachio/issues/325
-	@JStacheLambda(
-			template = "{{#checkForNull}}{{propertyVar}}.require({{> @section}}){{/checkForNull}}{{^checkForNull}}{{> @section}}{{/checkForNull}}")
-	public String validate(PropertyModel pm) {
-		return "";
-	}
+	// @JStacheLambda(
+	// template = "{{#checkForNull}}{{propertyVar}}.require({{>
+	// @section}}){{/checkForNull}}{{^checkForNull}}{{> @section}}{{/checkForNull}}")
+	// public String validate(PropertyModel pm) {
+	// return "";
+	// }
 
 	record Converter(String methodName) {
 	}
@@ -123,6 +128,14 @@ record BuilderModel( //
 				case BOOLEAN_TYPE -> "Boolean";
 				default -> "String (converted)";
 			};
+		}
+
+		public String validate() {
+			if (checkForNull()) {
+				return propertyVar() + ".build(LogProperties.interpolateKey(" + propertyLiteral()
+						+ ", _prefixParameters)).require(this." + name + ")";
+			}
+			return "this." + name;
 		}
 
 		public boolean checkForNull() {

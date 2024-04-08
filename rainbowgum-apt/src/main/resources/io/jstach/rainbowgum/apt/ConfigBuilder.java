@@ -3,6 +3,7 @@ package $$packageName$$;
 
 import io.jstach.rainbowgum.LogProperties;
 import io.jstach.rainbowgum.LogProperty;
+import io.jstach.rainbowgum.LogProperty.PropertyGetter;
 import io.jstach.rainbowgum.LogProperty.Property;
 
 /**
@@ -49,10 +50,9 @@ public final class $$builderName$$ implements io.jstach.rainbowgum.LogBuilder<$$
 	$$/normal$$
 	$$/properties$$
 	
-	private final String propertyPrefix;
 	$$#properties$$
 	$$#normal$$
-	final Property<$$typeWithNoAnnotation$$> $$propertyVar$$;
+	final PropertyGetter<$$typeWithNoAnnotation$$> $$propertyVar$$;
 	$$/normal$$
 	$$/properties$$
 	
@@ -61,7 +61,7 @@ public final class $$builderName$$ implements io.jstach.rainbowgum.LogBuilder<$$
 	private $$fieldType$$ $$name$$ = $$defaultValue$$;
 	$$/normal$$
 	$$#prefixParameter$$
-	private final $$typeWithAnnotation$$ $$name$$;
+	private $$typeWithAnnotation$$ $$name$$;
 	$$/prefixParameter$$
 	$$#passThrough$$
 	private $$typeWithAnnotation$$ $$name$$;
@@ -84,13 +84,12 @@ public final class $$builderName$$ implements io.jstach.rainbowgum.LogBuilder<$$
 				$$^-first$$, $$/-first$$"$$name$$", $$name$$
 				$$/prefixParameters$$
 			);
-		this.propertyPrefix = LogProperties.interpolateKey(PROPERTY_PREFIX, prefixParameters);
 		$$#properties$$
 		$$#normal$$
 		$$propertyVar$$ = Property.builder()
 			$$#convertMethod$$$$.$$
 			$$/convertMethod$$
-			.build(LogProperties.interpolateKey($$propertyLiteral$$, prefixParameters));
+			;
 
 		$$/normal$$
 		$$#prefixParameter$$
@@ -141,9 +140,10 @@ public final class $$builderName$$ implements io.jstach.rainbowgum.LogBuilder<$$
 	 $$/exceptions$$
 	 */
 	public $$targetType$$ build() $$throwsList$${
+		var _prefixParameters = _prefixParameters();
 		return $$factoryMethod$$(
 				$$#properties$$
-				$$^-first$$, $$/-first$$$$#validate$$this.{{name}}$$/validate$$
+				$$^-first$$, $$/-first$$$$validate$$
 				$$/properties$$
 				);
 	}
@@ -151,9 +151,11 @@ public final class $$builderName$$ implements io.jstach.rainbowgum.LogBuilder<$$
 	@Override
 	public $$builderName$$ fromProperties(LogProperties properties) {
 		var __v = LogProperty.Validator.of(this.getClass());
+		var _prefixParameters = _prefixParameters();
 		$$#properties$$
 		$$#normal$$
-		var _$$name$$ = $$propertyVar$$.get(properties).or(this.$$name$$);
+		var _prop_$$name$$ = $$propertyVar$$.build(LogProperties.interpolateKey($$propertyLiteral$$, _prefixParameters));
+		var _$$name$$ = _prop_$$name$$.get(properties).or(this.$$name$$);
 		__v.$$validateMethod$$(_$$name$$);
 		$$/normal$$
 		$$/properties$$
@@ -171,11 +173,13 @@ public final class $$builderName$$ implements io.jstach.rainbowgum.LogBuilder<$$
 	 * @param consumer apply is called where first arg is key and second is value.
 	 */
 	public void toProperties(java.util.function.BiConsumer<String, String> consumer) {
+		var _prefixParameters = _prefixParameters();
 		$$#properties$$
 		$$#normal$$
 		var _$$name$$ = this.$$name$$;
 		if (_$$name$$ != null) {
-			consumer.accept($$propertyVar$$.key(), $$propertyVar$$.propertyString(_$$name$$));
+			var _prop = $$propertyVar$$.build(LogProperties.interpolateKey($$propertyLiteral$$, _prefixParameters));
+			consumer.accept(_prop.key(), _prop.propertyString(_$$name$$));
 		}
 		$$/normal$$
 		$$/properties$$
@@ -187,7 +191,16 @@ public final class $$builderName$$ implements io.jstach.rainbowgum.LogBuilder<$$
 	 */
 	@Override
 	public String propertyPrefix() {
-		return this.propertyPrefix;
+		return LogProperties.interpolateKey(PROPERTY_PREFIX, _prefixParameters());
+	}
+	
+	private java.util.Map<String,String> _prefixParameters() {
+		java.util.Map<String,String> prefixParameters = java.util.Map.of(
+				$$#prefixParameters$$
+				$$^-first$$, $$/-first$$"$$name$$", $$name$$
+				$$/prefixParameters$$
+			);
+		return prefixParameters;
 	}
 	
 }
