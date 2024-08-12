@@ -50,6 +50,14 @@ public final class MetaLog {
 
 	static Supplier<? extends @Nullable PrintStream> output = () -> System.err;
 
+	/**
+	 * Provides the meta log as an event logger.
+	 * @return event logger
+	 */
+	public static LogEventLogger errorLogger() {
+		return FailsafeAppender.INSTANCE;
+	}
+
 }
 
 enum FailsafeAppender implements LogEventLogger {

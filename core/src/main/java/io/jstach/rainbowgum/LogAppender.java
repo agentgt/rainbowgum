@@ -341,6 +341,12 @@ public sealed interface LogAppender extends LogLifecycle, LogEventConsumer {
 					config.serviceRegistry().put(LogAppender.class, name, _a);
 					yield _a;
 				}
+				case DecorateLogAppender da -> {
+					var _a = da.withFlags(flags);
+					String name = da.delegate.name();
+					config.serviceRegistry().put(LogAppender.class, name + "." + name, _a);
+					yield _a;
+				}
 				default -> {
 					throw new IllegalStateException();
 				}
@@ -375,6 +381,38 @@ public sealed interface LogAppender extends LogLifecycle, LogEventConsumer {
 
 	@Override
 	public void close();
+
+	/**
+	 * An appender filter.
+	 */
+	public interface Filter {
+
+		/**
+		 * Append events maybe using appender .
+		 * @param appender downstream appender.
+		 * @param errorLogger logger for errors.
+		 * @param events event array.
+		 * @param count total events in array.
+		 */
+		public void append(LogAppender appender, LogEventLogger errorLogger, LogEvent[] events, int count);
+
+		/**
+		 * Append events maybe using appender.
+		 * @param appender downstream appender.
+		 * @param errorLogger logger for errors.
+		 * @param event single event.
+		 */
+		public void append(LogAppender appender, LogEventLogger errorLogger, LogEvent event);
+
+		/**
+		 * Checks the status and by default returns OK.
+		 * @return by default returns OK.
+		 */
+		default List<LogResponse.Status> status() {
+			return List.of(LogResponse.Status.StandardStatus.OK);
+		}
+
+	}
 
 }
 
@@ -415,6 +453,61 @@ sealed interface InternalLogAppender extends LogAppender, Actor {
 	 */
 	@Override
 	public List<LogResponse> act(LogAction action);
+
+}
+
+final class DecorateLogAppender implements InternalLogAppender {
+
+	final DirectLogAppender delegate;
+
+	private final LogAppender.Filter filter;
+
+	DecorateLogAppender(DirectLogAppender delegate, Filter filter) {
+		super();
+		this.delegate = delegate;
+		this.filter = filter;
+	}
+
+	@Override
+	public void append(LogEvent[] events, int count) {
+		filter.append(delegate, MetaLog.errorLogger(), events, count);
+	}
+
+	@Override
+	public void append(LogEvent event) {
+		filter.append(delegate, MetaLog.errorLogger(), event);
+
+	}
+
+	@Override
+	public final void close() {
+		delegate.close();
+	}
+
+	@Override
+	public final void start(LogConfig config) {
+		delegate.start(config);
+	}
+
+	@Override
+	public final boolean visit(AppenderVisitor visitor) {
+		return delegate.visit(visitor);
+	}
+
+	@Override
+	public final InternalLogAppender changeLock(Lock lock) {
+		return new DecorateLogAppender(delegate.changeLock(lock), filter);
+	}
+
+	@Override
+	public InternalLogAppender withFlags(Set<AppenderFlag> flags) {
+		return new DecorateLogAppender(delegate.withFlags(flags), filter);
+	}
+
+	@Override
+	public List<LogResponse> act(LogAction action) {
+		return delegate.act(action);
+	}
 
 }
 
